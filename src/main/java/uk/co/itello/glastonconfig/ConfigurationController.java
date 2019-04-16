@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -36,7 +38,7 @@ public class ConfigurationController {
 
     private Map<String, Map<Date, String>> tenantNotifications = new HashMap<>();
 
-    @RequestMapping(value = "{tenant}/config", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{tenant}/config", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
     public GlastoConfig config(@PathVariable("tenant") String tenant) {
         if (!tenants.contains(tenant)) {
@@ -46,7 +48,17 @@ public class ConfigurationController {
         return tenantsConfig.get(tenant);
     }
 
-    @RequestMapping(value = "{tenant}/config", method = POST)
+    @PostMapping(value = "{tenant}/clear", produces = APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public GlastoConfig clear(@PathVariable("tenant") String tenant) {
+        if (!tenants.contains(tenant)) {
+            throw new RuntimeException("unauthorized: " + tenant);
+        }
+
+        return tenantsConfig.remove(tenant);
+    }
+
+    @PostMapping(value = "{tenant}/config")
     @ResponseStatus(HttpStatus.CREATED)
     public void config(@PathVariable("tenant") String tenant,
                        @RequestBody GlastoConfig config) {
@@ -60,7 +72,7 @@ public class ConfigurationController {
         tenantsConfig.put(tenant, config);
     }
 
-    @RequestMapping(value = "{tenant}/notify", method = POST, consumes = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{tenant}/notify", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public void notify(@PathVariable("tenant") String tenant,
                        @RequestBody GlastoNotify glastoNotify) {
@@ -77,7 +89,7 @@ public class ConfigurationController {
         tenantNotifications.put(tenant, notification);
     }
 
-    @RequestMapping(value = "{tenant}/notify", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{tenant}/notify", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<Date, String> notifications(@PathVariable("tenant") String tenant) {
         if (!tenants.contains(tenant)) {
@@ -87,7 +99,7 @@ public class ConfigurationController {
         return tenantNotifications.getOrDefault(tenant, new HashMap<>());
     }
 
-    @RequestMapping(value = "{tenant}/notify", produces = TEXT_HTML_VALUE)
+    @GetMapping(value = "{tenant}/notify", produces = TEXT_HTML_VALUE)
     public String notificationsView(@PathVariable("tenant") String tenant, Model model) {
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);

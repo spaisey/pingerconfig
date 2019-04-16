@@ -39,4 +39,13 @@ public class GlastoConfig {
     public void setRetryDelay(int retryDelay) {
         this.retryDelay = retryDelay;
     }
+
+    @Override
+    public String toString() {
+        return "GlastoConfig{" +
+                "url='" + url + '\'' +
+                ", searchCriteria=" + searchCriteria +
+                ", retryDelay=" + retryDelay +
+                '}';
+    }
 }

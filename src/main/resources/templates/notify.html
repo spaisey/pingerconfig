@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <title>Servers Ready</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta http-equiv="refresh" content="1">
+    <style>
+        table.example-table, .example-table td {
+            border: 1px solid darkgreen;
+            border-collapse: collapse;
+            padding:10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<table class="example-table">
+    <tr>
+        <th>IP</th>
+        <th>DATE</th>
+    </tr>
+    <!--/*@thymesVar id="notifications" type="java.util.Map"*/-->
+    <!--/*@thymesVar id="n" type="java.util.Map.Entry"*/-->
+    <tr th:each="n : ${notifications}">
+        <td th:text="${n.value}">1.1.1.1</td>
+        <td th:text="${n.key}">0</td>
+    </tr>
+</table>
+
+</body>
+
+</html>

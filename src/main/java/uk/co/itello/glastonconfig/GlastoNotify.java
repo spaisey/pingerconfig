@@ -16,8 +16,6 @@ public class GlastoNotify {
 
     @Override
     public String toString() {
-        return "GlastoNotify{" +
-                "ip='" + ip + '\'' +
-                '}';
+        return ip;
     }
 }

@@ -10,19 +10,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 public class ConfigurationController {
@@ -36,7 +35,7 @@ public class ConfigurationController {
         this.tenants = tenants;
     }
 
-    private Map<String, Map<Date, String>> tenantNotifications = new HashMap<>();
+    private Map<String, Map<Instant, String>> tenantNotifications = new ConcurrentHashMap<>();
 
     @GetMapping(value = "{tenant}/config", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -74,7 +73,7 @@ public class ConfigurationController {
 
     @PostMapping(value = "{tenant}/notify", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void notify(@PathVariable("tenant") String tenant,
+    public synchronized void notify(@PathVariable("tenant") String tenant,
                        @RequestBody GlastoNotify glastoNotify) {
 
         if (!tenants.contains(tenant)) {
@@ -83,15 +82,14 @@ public class ConfigurationController {
 
         LOG.info("*** NOTIFY from {} *** : {}", tenant, glastoNotify);
 
-        Map<Date, String> notification = new HashMap<>();
-        notification.put(new Date(), glastoNotify.getIp());
-
-        tenantNotifications.put(tenant, notification);
+        Map<Instant, String> map = tenantNotifications.getOrDefault(tenant, new HashMap<>());
+        map.put(Instant.now(), glastoNotify.getIp());
+        tenantNotifications.put(tenant, map);
     }
 
     @GetMapping(value = "{tenant}/notify", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<Date, String> notifications(@PathVariable("tenant") String tenant) {
+    public Map<Instant, String> notifications(@PathVariable("tenant") String tenant) {
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
         }

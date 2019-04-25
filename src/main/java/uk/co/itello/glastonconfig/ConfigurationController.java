@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,6 +34,8 @@ public class ConfigurationController {
 
     private Map<String, GlastoConfig> tenantsConfig = new HashMap<>();
 
+    private Map<String, Set<String>> tenantInstances = new HashMap<>();
+
     public ConfigurationController(@Value("${glasto.tenants:bernie,sp,test}") List<String> tenants) {
         this.tenants = tenants;
     }
@@ -39,10 +44,14 @@ public class ConfigurationController {
 
     @GetMapping(value = "{tenant}/config", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public GlastoConfig config(@PathVariable("tenant") String tenant) {
+    public GlastoConfig config(@PathVariable("tenant") String tenant, HttpServletRequest request) {
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
         }
+
+        Set<String> instances = tenantInstances.getOrDefault(tenant, new HashSet<>());
+        instances.add(request.getRemoteAddr());
+        tenantInstances.put(tenant, instances);
 
         return tenantsConfig.get(tenant);
     }
@@ -103,6 +112,7 @@ public class ConfigurationController {
             throw new RuntimeException("unauthorized: " + tenant);
         }
 
+        model.addAttribute("instances", tenantInstances.getOrDefault(tenant, new HashSet<>()).size());
         model.addAttribute("notifications", new TreeMap<>(tenantNotifications.getOrDefault(tenant, new HashMap<>())));
         return "notify";
     }

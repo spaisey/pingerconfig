@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.concurrent.ConcurrentHashMap.newKeySet;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
 
@@ -49,7 +49,7 @@ public class ConfigurationController {
             throw new RuntimeException("unauthorized: " + tenant);
         }
 
-        Set<String> instances = tenantInstances.getOrDefault(tenant, new HashSet<>());
+        Set<String> instances = getInstances(tenant);
         instances.add(request.getRemoteAddr());
         tenantInstances.put(tenant, instances);
 
@@ -82,7 +82,7 @@ public class ConfigurationController {
 
     @PostMapping(value = "{tenant}/notify", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public synchronized void notify(@PathVariable("tenant") String tenant,
+    public void notify(@PathVariable("tenant") String tenant,
                        @RequestBody GlastoNotify glastoNotify) {
 
         if (!tenants.contains(tenant)) {
@@ -91,9 +91,23 @@ public class ConfigurationController {
 
         LOG.info("*** NOTIFY from {} *** : {}", tenant, glastoNotify);
 
-        Map<Instant, String> map = tenantNotifications.getOrDefault(tenant, new HashMap<>());
+        Map<Instant, String> map = getNotifications(tenant);
         map.put(Instant.now(), glastoNotify.getIp());
         tenantNotifications.put(tenant, map);
+    }
+
+    @PostMapping(value = "{tenant}/notify/clear", consumes = APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public void notifyClear(@PathVariable("tenant") String tenant) {
+
+        if (!tenants.contains(tenant)) {
+            throw new RuntimeException("unauthorized: " + tenant);
+        }
+
+        LOG.info("*** CLEAR NOTIFY from {} *** : {}", tenant, getNotifications(tenant));
+
+        tenantNotifications.clear();
+        tenantInstances.clear();
     }
 
     @GetMapping(value = "{tenant}/notify", produces = APPLICATION_JSON_VALUE)
@@ -103,7 +117,7 @@ public class ConfigurationController {
             throw new RuntimeException("unauthorized: " + tenant);
         }
 
-        return tenantNotifications.getOrDefault(tenant, new HashMap<>());
+        return getNotifications(tenant);
     }
 
     @GetMapping(value = "{tenant}/notify", produces = TEXT_HTML_VALUE)
@@ -112,8 +126,16 @@ public class ConfigurationController {
             throw new RuntimeException("unauthorized: " + tenant);
         }
 
-        model.addAttribute("instances", tenantInstances.getOrDefault(tenant, new HashSet<>()).size());
-        model.addAttribute("notifications", new TreeMap<>(tenantNotifications.getOrDefault(tenant, new HashMap<>())));
+        model.addAttribute("instances", getInstances(tenant).size());
+        model.addAttribute("notifications", new TreeMap<>(getNotifications(tenant)));
         return "notify";
+    }
+
+    private Set<String> getInstances(@PathVariable("tenant") String tenant) {
+        return tenantInstances.getOrDefault(tenant, newKeySet());
+    }
+
+    private Map<Instant, String> getNotifications(@PathVariable("tenant") String tenant) {
+        return tenantNotifications.getOrDefault(tenant, new ConcurrentHashMap<>());
     }
 }

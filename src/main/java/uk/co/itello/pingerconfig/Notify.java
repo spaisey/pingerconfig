@@ -1,9 +1,9 @@
-package uk.co.itello.glastonconfig;
+package uk.co.itello.pingerconfig;
 
-public class GlastoNotify {
+public class Notify {
     private String ip;
 
-    public GlastoNotify() {
+    public Notify() {
     }
 
     public String getIp() {

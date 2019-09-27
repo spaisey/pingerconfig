@@ -1,12 +1,12 @@
-package uk.co.itello.glastonconfig;
+package uk.co.itello.pingerconfig;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class GlastonServerApplication {
+public class ServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GlastonServerApplication.class, args);
+		SpringApplication.run(ServerApplication.class, args);
 	}
 }

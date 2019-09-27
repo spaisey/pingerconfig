@@ -1,4 +1,4 @@
-package uk.co.itello.glastonconfig;
+package uk.co.itello.pingerconfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

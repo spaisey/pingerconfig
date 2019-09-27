@@ -1,4 +1,4 @@
-package uk.co.itello.glastonconfig;
+package uk.co.itello.pingerconfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public class ConfigurationController {
 
     private final List<String> tenants;
 
-    private Map<String, GlastoConfig> tenantsConfig = new HashMap<>();
+    private Map<String, Config> tenantsConfig = new HashMap<>();
 
     private Map<String, Set<String>> tenantInstances = new HashMap<>();
 
@@ -44,7 +44,7 @@ public class ConfigurationController {
 
     @GetMapping(value = "{tenant}/config", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public GlastoConfig config(@PathVariable("tenant") String tenant, HttpServletRequest request) {
+    public Config config(@PathVariable("tenant") String tenant, HttpServletRequest request) {
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
         }
@@ -58,7 +58,7 @@ public class ConfigurationController {
 
     @PostMapping(value = "{tenant}/clear", produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public GlastoConfig clear(@PathVariable("tenant") String tenant) {
+    public Config clear(@PathVariable("tenant") String tenant) {
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
         }
@@ -69,7 +69,7 @@ public class ConfigurationController {
     @PostMapping(value = "{tenant}/config")
     @ResponseStatus(HttpStatus.CREATED)
     public void config(@PathVariable("tenant") String tenant,
-                       @RequestBody GlastoConfig config) {
+                       @RequestBody Config config) {
 
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
@@ -83,16 +83,16 @@ public class ConfigurationController {
     @PostMapping(value = "{tenant}/notify", consumes = APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public void notify(@PathVariable("tenant") String tenant,
-                       @RequestBody GlastoNotify glastoNotify) {
+                       @RequestBody Notify notify) {
 
         if (!tenants.contains(tenant)) {
             throw new RuntimeException("unauthorized: " + tenant);
         }
 
-        LOG.info("*** NOTIFY from {} *** : {}", tenant, glastoNotify);
+        LOG.info("*** NOTIFY from {} *** : {}", tenant, notify);
 
         Map<Instant, String> map = getNotifications(tenant);
-        map.put(Instant.now(), glastoNotify.getIp());
+        map.put(Instant.now(), notify.getIp());
         tenantNotifications.put(tenant, map);
     }
 
